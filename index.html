@@ -1084,7 +1084,7 @@ setTimeout(initCharts, 100);
   // Register Service Worker for PWA/offline support
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {
+      navigator.serviceWorker.register('/ExcelDashboardv2/sw.js').catch(() => {
         // Fails silently when opened as a local file — that's OK
       });
     });
