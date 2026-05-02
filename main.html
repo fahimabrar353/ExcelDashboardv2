@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a18">
+<title>Ongoing Projects Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #e8f4ee;
+    --tableheadercolor: #fcfcfc;
+    --border: rgba(0,0,0,0.09);
+    --border2: rgba(0,0,0,0.15);
+    --text: #1a1a18;
+    --text2: #5a5a56;
+    --text3: #5b5b5b;
+    --accent: #1a6b3c;
+    --accent-light: #e8f4ee;
+    --accent-mid: #2d9e5f;
+    --warn: #b35c00;
+    --warn-light: #fff3e8;
+    --danger: #9e1f1f;
+    --danger-light: #fdeaea;
+    --info: #1a4a8a;
+    --info-light: #e8f0fb;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+  
+  /* HEADER */
+  .header { background: var(--text); color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; z-index: 100; }
+  .header-logo { width: 32px; height: 32px; background: var(--accent-mid); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
+  .header-logo svg { width: 18px; height: 18px; fill: white; }
+  .header-title { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+  .header-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .search-wrap { position: relative; }
+  .search-wrap input { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 7px; padding: 7px 30px 7px 34px; color: white; font-family: inherit; font-size: 13px; width: 220px; outline: none; }
+  .search-wrap input::placeholder { color: rgba(255,255,255,0.4); }
+  .search-wrap input:focus { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: 0.4; }
+  .search-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 14px; line-height: 1; padding: 2px 4px; border-radius: 50%; display: none; transition: color 0.15s, background 0.15s; }
+  .search-clear:hover { color: white; background: rgba(255,255,255,0.15); }
+  .search-clear.visible { display: flex; align-items: center; justify-content: center; }
+  
+  /* MAIN LAYOUT */
+  .layout { display: grid; grid-template-columns: 260px 1fr; flex: 1; min-height: 0; }
+  
+  /* SIDEBAR */
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 990; }
+  .sidebar-overlay.open { display: block; }
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 16px 12px; overflow-y: auto; height: 100%; }
+  .sidebar-section { margin-bottom: 20px; }
+  .sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: var(--text3); text-transform: uppercase; padding: 0 8px; margin-bottom: 6px; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text2); transition: all 0.15s; font-weight: 400; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+  .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .nav-item .count { margin-left: auto; font-size: 11px; background: var(--surface2); padding: 1px 6px; border-radius: 10px; color: var(--text3); }
+  .filter-section { padding: 8px; }
+  .filter-group { margin-bottom: 12px; }
+  .filter-title { font-size: 11px; font-weight: 500; color: var(--text3); margin-bottom: 6px; }
+  .filter-range { width: 100%; accent-color: var(--accent); }
+  .filter-range-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-top: 2px; }
+  
+  /* MAIN CONTENT */
+  .main { padding: 20px; overflow-y: auto; min-width: 0; height: 100%; }
+  
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; }
+  .stat-card.clickable { cursor: pointer; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
+  .stat-card.clickable:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 4px 12px rgba(26, 107, 60, 0.1); }
+  .stat-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; color: var(--text); line-height: 1; }
+  .stat-value.green { color: var(--accent); }
+  .stat-value.warn { color: var(--warn); }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  
+  /* CHARTS ROW */
+  .charts-row { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; min-width: 0; }
+  .chart-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 14px; }
+  
+  /* TABLE */
+  .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .table-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .table-title { font-size: 13px; font-weight: 500; }
+  .table-count { font-size: 12px; color: var(--text3); }
+  .table-controls { display: flex; gap: 8px; align-items: center; }
+  select.filter-select { font-family: inherit; font-size: 12px; padding: 5px 10px; border: 1px solid var(--border2); border-radius: 7px; background: var(--surface); color: var(--text); outline: none; cursor: pointer; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; background: var(--tableheadercolor); border-bottom: 1px solid var(--border); white-space: nowrap; user-select: none; }
+  thead th.sortable { cursor: pointer; }
+  thead th.sortable:hover { color: var(--text); background: var(--surface2); }
+  thead th .sort-icon { opacity: 0.3; margin-left: 4px; font-style: normal; }
+  thead th.sorted { color: var(--accent); }
+  thead th.sorted .sort-icon { opacity: 1; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 10px 14px; vertical-align: middle; }
+  .proj-name { font-weight: 500; color: var(--text); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .proj-name small { font-weight: 400; color: var(--text3); font-size: 11px; display: block; margin-top: 1px; }
+  .progress-cell { min-width: 120px; }
+  .progress-bar { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  .pct-text { font-size: 12px; font-weight: 500; }
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 14px; font-weight: 500; }
+  .badge.green { background: var(--accent-light); color: var(--accent); }
+  .badge.warn { background: var(--warn-light); color: var(--warn); }
+  .badge.danger { background: var(--danger-light); color: var(--danger); }
+  .badge.info { background: var(--info-light); color: var(--info); }
+  .mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+  
+  /* DETAIL PANEL */
+  .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; display: none; align-items: center; justify-content: center; }
+  .detail-overlay.open { display: flex; }
+  .detail-panel { background: var(--surface); width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  .detail-top { padding: 20px; border-bottom: 1px solid var(--border); background: var(--surface); z-index: 1; flex-shrink: 0; }
+  .detail-close { float: right; background: var(--surface2); border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text2); }
+  .detail-id { font-size: 11px; color: var(--text3); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+  .detail-name { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--text); }
+  .detail-body { display: flex; flex: 1; overflow: hidden; padding: 0; }
+  .detail-left { width: 50%; padding: 30px; overflow-y: auto; border-right: 1px solid var(--border); }
+  .detail-right { width: 50%; padding: 30px; overflow-y: auto; ; }
+  .proj-img { width: 100%; border-radius: var(--radius-lg); margin-bottom: 20px; box-shadow: var(--shadow); object-fit: contain; background: var(--surface); cursor: zoom-in; transition: transform 0.2s; }
+  .proj-img:hover { transform: scale(1.02); }
+  .fs-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+  .fs-overlay.open { display: flex; }
+  .fs-overlay img { width: 100%; height: 100%; object-fit: contain; cursor: default; }
+  .fs-counter { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); color: white; background: rgba(0,0,0,0.6); padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; letter-spacing: 0.05em; z-index: 301; font-family: 'DM Mono', monospace; }
+  .fs-close { position: absolute; top: 40px; right: 20px; background: rgba(0,0,0,0.5); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 301; transition: background 0.2s; }
+  .fs-close:hover { background: rgba(0,0,0,0.8); }
+  .detail-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .detail-metric { background: var(--surface2); border-radius: var(--radius); padding: 12px 14px; }
+  .detail-metric-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; margin-bottom: 4px; }
+  .detail-metric-value { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
+  .phases-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+  .phase-row { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; }
+  .phase-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .phase-name { font-size: 16px; font-weight: 500; color: var(--text); }
+  .phase-fy { font-size: 11px; color: var(--text3); }
+  .phase-nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  .phase-num { min-width: 0; }
+  .phase-num-label { font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .phase-num-val { font-size: 16px; font-weight: 500; font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .big-progress { margin-bottom: 20px; }
+  .big-progress-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .big-progress-label { font-size: 12px; color: var(--text2); }
+  .big-progress-pct { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; }
+  .big-progress-bar { height: 10px; background: var(--surface2); border-radius: 6px; overflow: hidden; }
+  .big-progress-fill { height: 100%; border-radius: 6px; transition: width 0.5s; }
+  
+  /* PAGINATION */
+  .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+  .pagination-info { font-size: 12px; color: var(--text3); }
+  .pagination-btns { display: flex; gap: 4px; }
+  .page-btn { border: 1px solid var(--border2); background: var(--surface); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: inherit; color: var(--text2); transition: all 0.15s; }
+  .page-btn:hover:not(:disabled) { background: var(--surface2); }
+  .page-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .page-btn:disabled { opacity: 0.4; cursor: default; }
+  
+  /* MOBILE & LANDSCAPE */
+  @media (max-width: 992px) {
+    .header { padding: 12px 16px; gap: 10px; }
+    .upload-label { display: none; }
+    .upload-btn { padding: 7px 12px; }
+    
+    .layout { grid-template-columns: 1fr; position: relative; }
+    .sidebar { display: none; }
+    .sidebar.open { display: block; position: fixed; top: 76px; left: 16px; right: 16px; width: auto; z-index: 1000; background: var(--surface); height: auto; max-height: calc(100vh - 100px); border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+    
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-card { padding: 12px; }
+    .charts-row { grid-template-columns: 1fr; gap: 16px; }
+    
+    /* Main becomes flex column so children can fill remaining height */
+    .main { padding: 12px; padding-bottom: 16px; display: flex; flex-direction: column; }
+    .proj-name { max-width: none; white-space: normal; }
+    
+    tbody td { padding: 10px 8px; font-size: 12px; }
+    thead th { padding: 10px 8px; font-size: 11px; }
+    
+    .pagination { flex-direction: column; gap: 12px; align-items: center; text-align: center; }
+    .pagination-btns { flex-wrap: wrap; justify-content: center; }
+
+    /* Project list fills remaining height, table scrolls inside */
+    #listView { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; }
+    .table-card { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; margin-bottom: 70px; }
+    .table-wrap { flex: 1; min-height: 0; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  }
+
+  /* MOBILE PORTRAIT - DETAIL VIEW OVERRIDE */
+  @media (max-width: 768px) {
+    .header { flex-wrap: wrap; }
+    .header > div:nth-child(2) { flex: 1; min-width: 150px; }
+    .header-right { width: 100%; margin-top: 4px; margin-left: 0; justify-content: space-between; gap: 10px; }
+    .search-wrap { flex: 1; }
+    .search-wrap input { width: 100%; }
+
+    .table-header { flex-direction: row; align-items: center; gap: 6px; }
+
+    .detail-top { padding: 40px 16px 16px 16px; }
+    .detail-body { flex-direction: column; overflow-y: auto; }
+    .detail-left { width: 100%; border-right: none; border-bottom: 1px solid var(--border); overflow-y: visible; padding: 16px; }
+    .detail-right { width: 100%; overflow-y: visible; padding: 16px; }
+    .detail-metrics { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .phase-nums { grid-template-columns: repeat(2, 1fr); gap: 4px; }
+    .phase-num-label { font-size: 11px; }
+    .phase-num-val { font-size: 16px; }
+  }
+
+  
+  .empty-state { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+  .upload-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-mid); color: white; border: none; border-radius: 7px; padding: 7px 13px; font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+  .upload-btn:hover { background: var(--accent); }
+  .upload-btn svg { width: 13px; height: 13px; fill: white; flex-shrink: 0; }
+  .upload-label { font-size: 11px; color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+  .upload-toast { position: fixed; bottom: 20px; right: 20px; background: var(--text); color: white; padding: 10px 16px; border-radius: 8px; font-size: 12px; z-index: 999; display: none; animation: fadeIn 0.2s; }
+  .upload-toast.error { background: var(--danger); }
+  .upload-toast.show { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo" onclick="toggleSidebar()" role="button" aria-label="Toggle menu">
+    <svg viewBox="0 0 20 20"><path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h9v2H3v-2z"/></svg>
+  </div>
+  <div>
+    <div class="header-title">Ongoing Projects</div>
+    <div class="header-sub">Construction Works Dashboard</div>
+  </div>
+  <div class="header-right">
+    <div>
+      <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleExcelUpload(event)">
+      <button class="upload-btn" onclick="document.getElementById('excelFileInput').click()">
+        <svg viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+        Load Excel
+      </button>
+      <div class="upload-label" id="uploadLabel">Using built-in data</div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="white"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+      </span>
+      <input type="text" id="searchInput" placeholder="Search projects..." oninput="onSearchInput()">
+      <button class="search-clear" id="searchClear" onclick="clearSearch()" aria-label="Clear search">✕</button>
+    </div>
+  </div>
+</div>
+<div class="upload-toast" id="uploadToast"></div>
+
+<div class="layout">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigation</div>
+      <button class="nav-item active" id="navDashboard" onclick="switchTab('dashboard')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="margin-right:4px"><path d="M2 2h4v4H2V2zm0 8h4v4H2v-4zm8-8h4v4h-4V2zm0 8h4v4h-4v-4z"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" id="navList" onclick="switchTab('list')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="margin-right:4px"><path d="M2 4h12v2H2V4zm0 4h12v2H2V8zm0 4h12v2H2v-2z"/></svg>
+        Project List
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Views</div>
+      <button class="nav-item active" onclick="setView('all', this)">
+        <div class="dot" style="background:#1a6b3c"></div> All Projects
+        <span class="count" id="countAll">53</span>
+      </button>
+      <button class="nav-item" onclick="setView('active', this)">
+        <div class="dot" style="background:#b35c00"></div> In Progress
+        <span class="count" id="countActive">-</span>
+      </button>
+      <button class="nav-item" onclick="setView('complete', this)">
+        <div class="dot" style="background:#1a6b3c"></div> Completed
+        <span class="count" id="countComplete">-</span>
+      </button>
+      <button class="nav-item" onclick="setView('critical', this)">
+        <div class="dot" style="background:#9e1f1f"></div> Critical (&lt;25%)
+        <span class="count" id="countCritical">-</span>
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Filter by Progress</div>
+      <div class="filter-section">
+        <input type="range" class="filter-range" id="minProgress" min="0" max="100" value="0" oninput="updateProgressFilter()">
+        <div class="filter-range-labels">
+          <span>Min: <b id="minProgressVal">0</b>%</span>
+          <span>100%</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">FY Filter</div>
+      <div class="filter-section">
+        <select class="filter-select" style="width:100%" id="fyFilter" onchange="applyFilters()">
+          <option value="">All fiscal years</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="dashboardView">
+      <div class="stats-row">
+        <div class="stat-card clickable" onclick="switchTab('list')">
+          <div class="stat-label" style="display:flex; justify-content:space-between; align-items:center;">
+            Total Projects
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+          </div>
+          <div class="stat-value" id="statTotal">53</div>
+          <div class="stat-sub">Tap to view list</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Sanction</div>
+          <div class="stat-value green" id="statSanction">—</div>
+          <div class="stat-sub">Lac BDT</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Contract</div>
+          <div class="stat-value" id="statContract">—</div>
+          <div class="stat-sub">Lac BDT</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Allotment</div>
+          <div class="stat-value warn" id="statAllotment">—</div>
+          <div class="stat-sub">Lac BDT</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Expenditure</div>
+          <div class="stat-value" id="statExpenditure" style="color:var(--info)">—</div>
+          <div class="stat-sub">Lac BDT</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">Progress distribution</div>
+          <div style="position:relative;height:250px;width:100%"><canvas id="distChart" role="img" aria-label="Progress distribution bar chart">Distribution of project progress percentages.</canvas></div>
+        </div>
+      </div>
+      
+
+    </div>
+
+    <div id="listView" style="display: none;">
+      <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">All Projects</div>
+        <div class="table-count" id="tableCount"></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px" onclick="sortByCol('id')" class="sortable" id="th-id">#<em class="sort-icon">↕</em></th>
+              <th style="min-width:240px">Project</th>
+              <th class="hide-mobile" style="min-width:140px">Builder</th>
+              <th class="hide-mobile sortable" onclick="sortByCol('sanction')" id="th-sanction">Sanction (Lac)<em class="sort-icon">↕</em></th>
+              <th class="hide-mobile sortable" onclick="sortByCol('contract')" id="th-contract">Contract (Lac)<em class="sort-icon">↕</em></th>
+              <th class="hide-mobile sortable" onclick="sortByCol('allotment')" id="th-allotment">Allotment (Lac)<em class="sort-icon">↕</em></th>
+              <th class="hide-mobile sortable" onclick="sortByCol('expenditure')" id="th-expenditure">Expenditure (Lac)<em class="sort-icon">↕</em></th>
+              <th style="min-width:140px" class="sortable" onclick="sortByCol('progress')" id="th-progress">Progress<em class="sort-icon">↕</em></th>
+              <th class="hide-mobile">Phases</th>
+            </tr>
+          </thead>
+          <tbody id="projectTableBody"></tbody>
+        </table>
+        <div id="emptyState" class="empty-state" style="display:none">No projects match your filters.</div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-top">
+      <button class="detail-close" onclick="closeDetailBtn()">✕</button>
+      <div class="detail-id" id="detailId"></div>
+      <div class="detail-name" id="detailName"></div>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+  </div>
+</div>
+
+<div class="fs-overlay" id="fsOverlay" onclick="closeFullscreen()">
+  <img id="fsImage" src="" onclick="event.stopPropagation()">
+  <div class="fs-counter" id="fsCounter" style="display:none">1 / 1</div>
+  <button class="fs-close" onclick="closeFullscreen()">✕</button>
+</div>
+
+<script>
+if (window.location.hash) {
+  window.history.replaceState(null, '', window.location.pathname);
+}
+const DATA = [];
+
+const PAGE_SIZE = 15;
+let currentPage = 1;
+let currentView = 'all';
+let filteredData = [...DATA];
+let distChart;
+let currentSort = { col: 'id', dir: 'asc' };
+
+function fmt(n) { return n ? n.toLocaleString('en-IN', {maximumFractionDigits: 2}) : '—'; }
+function pctColor(p) {
+  if (p === null || p === undefined) return '#9a9a94';
+  if (p >= 100) return '#1a6b3c';
+  if (p >= 70) return '#2d9e5f';
+  if (p >= 40) return '#b35c00';
+  return '#9e1f1f';
+}
+function pctBadge(p) {
+  if (p === null || p === undefined) return '<span class="badge info">Pending</span>';
+  if (p >= 100) return `<span class="badge green">${Math.min(p,100)}%</span>`;
+  if (p >= 70) return `<span class="badge green">${p}%</span>`;
+  if (p >= 40) return `<span class="badge warn">${p}%</span>`;
+  return `<span class="badge danger">${p}%</span>`;
+}
+
+function sortByCol(col) {
+  if (currentSort.col === col) {
+    currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSort.col = col;
+    currentSort.dir = col === 'progress' ? 'desc' : (col === 'id' ? 'asc' : 'desc');
+  }
+  updateSortHeaders();
+  applyFilters();
+}
+
+function updateSortHeaders() {
+  const cols = ['id', 'sanction', 'contract', 'allotment', 'expenditure', 'progress'];
+  cols.forEach(col => {
+    const th = document.getElementById('th-' + col);
+    if (!th) return;
+    const icon = th.querySelector('.sort-icon');
+    if (currentSort.col === col) {
+      th.classList.add('sorted');
+      icon.textContent = currentSort.dir === 'asc' ? '↑' : '↓';
+    } else {
+      th.classList.remove('sorted');
+      icon.textContent = '↕';
+    }
+  });
+}
+
+function initFYFilter() {
+  const fys = new Set();
+  DATA.forEach(p => p.phases.forEach(ph => { if (ph.fy) fys.add(ph.fy); }));
+  const sorted = [...fys].sort();
+  const sel = document.getElementById('fyFilter');
+  sorted.forEach(fy => { const o = document.createElement('option'); o.value = fy; o.textContent = 'FY ' + fy; sel.appendChild(o); });
+}
+
+function onSearchInput() {
+  const input = document.getElementById('searchInput');
+  const clearBtn = document.getElementById('searchClear');
+  clearBtn.classList.toggle('visible', input.value.length > 0);
+  applyFilters();
+}
+
+function clearSearch() {
+  const input = document.getElementById('searchInput');
+  input.value = '';
+  document.getElementById('searchClear').classList.remove('visible');
+  input.focus();
+  applyFilters();
+}
+
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const minProg = parseInt(document.getElementById('minProgress').value);
+  const fy = document.getElementById('fyFilter').value;
+
+  let data = DATA.filter(p => {
+    if (search && !p.name.toLowerCase().includes(search)) return false;
+    const prog = Math.min(p.overall_progress_pct || 0, 100);
+    if (prog < minProg) return false;
+    if (fy && !p.phases.some(ph => ph.fy === fy)) return false;
+    if (currentView === 'active' && (prog >= 100 || prog < 1)) return false;
+    if (currentView === 'complete' && prog < 100) return false;
+    if (currentView === 'critical' && prog >= 25) return false;
+    return true;
+  });
+
+  const { col, dir } = currentSort;
+  const asc = dir === 'asc' ? 1 : -1;
+  if (col === 'progress') data.sort((a,b) => asc * ((a.overall_progress_pct||0) - (b.overall_progress_pct||0)));
+  else if (col === 'contract') data.sort((a,b) => asc * ((a.total_contract||0) - (b.total_contract||0)));
+  else if (col === 'sanction') data.sort((a,b) => asc * ((a.total_sanction||0) - (b.total_sanction||0)));
+  else if (col === 'allotment') data.sort((a,b) => asc * ((a.total_allotment||0) - (b.total_allotment||0)));
+  else if (col === 'expenditure') data.sort((a,b) => asc * ((a.total_expenditure||0) - (b.total_expenditure||0)));
+  else data.sort((a,b) => asc * (a.id - b.id));
+
+  filteredData = data;
+  currentPage = 1;
+  updateStats(data);
+  // Update count display
+  const countEl = document.getElementById('tableCount');
+  if (countEl) countEl.textContent = data.length + ' projects';
+  renderTable();
+  updateSidebarCounts();
+}
+
+function updateSidebarCounts() {
+  document.getElementById('countAll').textContent = DATA.length;
+  document.getElementById('countActive').textContent = DATA.filter(p => { const pg = Math.min(p.overall_progress_pct||0,100); return pg > 0 && pg < 100; }).length;
+  document.getElementById('countComplete').textContent = DATA.filter(p => (p.overall_progress_pct||0) >= 100).length;
+  document.getElementById('countCritical').textContent = DATA.filter(p => (p.overall_progress_pct||0) < 30).length;
+}
+
+function switchTab(tab, push = true) {
+  if (tab === 'dashboard') {
+    document.getElementById('dashboardView').style.display = 'block';
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('navDashboard').classList.add('active');
+    document.getElementById('navList').classList.remove('active');
+    if(window.innerWidth <= 992) {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+        document.getElementById('sidebarOverlay')?.classList.remove('open');
+        if (window.location.hash === '#menu') {
+          history.replaceState(null, '', window.location.pathname);
+          push = false;
+        }
+      }
+    }
+    if (push && window.location.hash !== '') {
+      history.pushState(null, '', window.location.pathname);
+    }
+  } else {
+    document.getElementById('dashboardView').style.display = 'none';
+    document.getElementById('listView').style.display = window.innerWidth <= 992 ? 'flex' : 'block';
+    document.getElementById('navDashboard').classList.remove('active');
+    document.getElementById('navList').classList.add('active');
+    if(window.innerWidth <= 992) {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+        document.getElementById('sidebarOverlay')?.classList.remove('open');
+        if (window.location.hash === '#menu') {
+          history.replaceState(null, '', '#list');
+          push = false;
+        }
+      }
+    }
+    if (push && window.location.hash !== '#list') {
+      history.pushState(null, '', '#list');
+    }
+  }
+}
+
+function updateStats(data) {
+  const totalSanction = data.reduce((s,p) => s + (p.total_sanction||0), 0);
+  const totalContract = data.reduce((s,p) => s + (p.total_contract||0), 0);
+  const totalAllotment = data.reduce((s,p) => s + (p.total_allotment||0), 0);
+  const totalExpenditure = data.reduce((s,p) => s + (p.total_expenditure||0), 0);
+  document.getElementById('statTotal').textContent = data.length;
+  document.getElementById('statSanction').textContent = (totalSanction/1000).toFixed(1) + 'K';
+  document.getElementById('statContract').textContent = (totalContract/1000).toFixed(1) + 'K';
+  document.getElementById('statAllotment').textContent = (totalAllotment/1000).toFixed(1) + 'K';
+  document.getElementById('statExpenditure').textContent = (totalExpenditure/1000).toFixed(1) + 'K';
+}
+
+function renderTable() {
+  const tbody = document.getElementById('projectTableBody');
+  const empty = document.getElementById('emptyState');
+  const total = filteredData.length;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredData.slice(start, start + PAGE_SIZE);
+
+  if (total === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; } 
+  else { empty.style.display = 'none'; }
+
+  tbody.innerHTML = page.map(p => {
+    const pct = Math.min(p.overall_progress_pct || 0, 100);
+    const clr = pctColor(pct);
+    return `<tr onclick="openDetail(${p.id})">
+      <td><span class="mono" style="color:var(--text3)">${p.id}</span></td>
+      <td><div class="proj-name">${p.name}<small>${p.phase_count} phase${p.phase_count>1?'s':''}</small></div></td>
+      <td class="hide-mobile"><div class="proj-name" style="font-size:12px; font-weight:400; max-width:180px; white-space:normal;">${p.builder_name || '—'}</div></td>
+      <td class="hide-mobile mono">${fmt(p.total_sanction)}</td>
+      <td class="hide-mobile mono">${fmt(p.total_contract)}</td>
+      <td class="hide-mobile mono">${fmt(p.total_allotment)}</td>
+      <td class="hide-mobile mono">${fmt(p.total_expenditure)}</td>
+      <td class="progress-cell">
+        <span class="pct-text" style="color:${clr}">${p.overall_progress_pct !== null ? Math.min(p.overall_progress_pct,100)+'%' : '—'}</span>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${clr}"></div></div>
+      </td>
+      <td class="hide-mobile"><span class="badge info">${p.phase_count}</span></td>
+    </tr>`;
+  }).join('');
+
+  renderPagination(total);
+}
+
+function renderPagination(total) {
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const pg = document.getElementById('pagination');
+  const start = (currentPage-1)*PAGE_SIZE+1;
+  const end = Math.min(currentPage*PAGE_SIZE, total);
+  let btns = `<div class="pagination-info">Showing ${total>0?start:0}–${end} of ${total}</div><div class="pagination-btns">`;
+  btns += `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>‹</button>`;
+  for (let i = 1; i <= pages; i++) {
+    if (i === 1 || i === pages || (i >= currentPage-1 && i <= currentPage+1)) {
+      btns += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (i === currentPage-2 || i === currentPage+2) {
+      btns += `<button class="page-btn" disabled>…</button>`;
+    }
+  }
+  btns += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage>=pages?'disabled':''}>›</button></div>`;
+  pg.innerHTML = btns;
+}
+
+function goPage(p) { currentPage = p; renderTable(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+function setView(view, btn) {
+  currentView = view;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function updateProgressFilter() {
+  const v = document.getElementById('minProgress').value;
+  document.getElementById('minProgressVal').textContent = v;
+  applyFilters();
+}
+
+function openDetail(id) {
+  const p = DATA.find(d => d.id === id);
+  if (!p) return;
+  document.getElementById('detailId').textContent = `Project #${p.id} · ${p.phase_count} phases`;
+  document.getElementById('detailName').textContent = p.name;
+  const pct = Math.min(p.overall_progress_pct || 0, 100);
+  const clr = pctColor(pct);
+  const body = document.getElementById('detailBody');
+  body.innerHTML = `
+    <div class="detail-left">
+      <div class="big-progress">
+        <div class="big-progress-top">
+          <span class="big-progress-label">Overall progress</span>
+          <span class="big-progress-pct" style="color:${clr}">${pct}%</span>
+        </div>
+        <div class="big-progress-bar"><div class="big-progress-fill" style="width:${pct}%;background:${clr}"></div></div>
+      </div>
+      <div class="detail-metrics">
+        <div class="detail-metric" style="grid-column: 1 / -1;"><div class="detail-metric-label">Builder</div><div class="detail-metric-value" style="font-size:14px; white-space:normal;">${p.builder_name || 'N/A'}</div></div>
+        <div class="detail-metric"><div class="detail-metric-label">Estimated Cost</div><div class="detail-metric-value">${p.total_estimated_cost ? fmt(p.total_estimated_cost)+' Lac' : 'N/A'}</div></div>
+        <div class="detail-metric"><div class="detail-metric-label">Sanction Amount</div><div class="detail-metric-value">${fmt(p.total_sanction)} Lac</div></div>
+        <div class="detail-metric"><div class="detail-metric-label">Contract Amount</div><div class="detail-metric-value">${fmt(p.total_contract)} Lac</div></div>
+        <div class="detail-metric"><div class="detail-metric-label">Total Allotment</div><div class="detail-metric-value">${fmt(p.total_allotment)} Lac</div></div>
+        <div class="detail-metric"><div class="detail-metric-label">Expenditure</div><div class="detail-metric-value">${fmt(p.total_expenditure)} Lac</div></div>
+      </div>
+      <div class="phases-title">Phase breakdown</div>
+      ${p.phases.map((ph, i) => {
+        const pc = ph.progress_pct !== null ? ph.progress_pct : null;
+        const clrPh = pctColor(pc);
+        return `<div class="phase-row">
+          <div class="phase-top">
+            <div class="phase-name">${ph.phase || 'Phase '+(i+1)}</div>
+            <div>${pctBadge(pc)}</div>
+          </div>
+          ${pc !== null ? `<div class="progress-bar" style="height:4px;margin-bottom:8px"><div class="progress-fill" style="width:${Math.min(pc,100)}%;background:${clrPh}"></div></div>` : ''}
+          <div class="phase-nums">
+            <div class="phase-num"><div class="phase-num-label">Sanction</div><div class="phase-num-val">${ph.sanction ? fmt(ph.sanction) : '—'}</div></div>
+            <div class="phase-num"><div class="phase-num-label">Contract</div><div class="phase-num-val">${ph.contract ? fmt(ph.contract) : '—'}</div></div>
+            <div class="phase-num"><div class="phase-num-label">Allotment</div><div class="phase-num-val">${ph.allotment ? fmt(ph.allotment) : '—'}</div></div>
+            <div class="phase-num"><div class="phase-num-label">Expenditure</div><div class="phase-num-val">${ph.expenditure ? fmt(ph.expenditure) : '—'}</div></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="detail-right">
+      <div class="phases-title">Project Images</div>
+      ${p.pic1 ? `<img src="${p.pic1}" class="proj-img" alt="Picture 1" onclick="openFullscreen(this)">` : ''}
+      ${p.pic2 ? `<img src="${p.pic2}" class="proj-img" alt="Picture 2" onclick="openFullscreen(this)">` : ''}
+      ${p.pic3 ? `<img src="${p.pic3}" class="proj-img" alt="Picture 3" onclick="openFullscreen(this)">` : ''}
+      ${p.pic4 ? `<img src="${p.pic4}" class="proj-img" alt="Picture 4" onclick="openFullscreen(this)">` : ''}
+      ${!p.pic1 && !p.pic2 && !p.pic3 && !p.pic4 ? '<div class="empty-state">No pictures available for this project.</div>' : ''}
+    </div>
+  `;
+  document.getElementById('detailOverlay').classList.add('open');
+  if (window.location.hash !== '#detail') {
+    history.pushState({modal: 'detail'}, '', '#detail');
+  }
+}
+
+function closeDetail(e) { if (e.target === document.getElementById('detailOverlay')) closeDetailBtn(); }
+function closeDetailBtn() { 
+  if (window.location.hash === '#detail' || window.location.hash === '#fullscreen') {
+    history.back();
+  } else {
+    document.getElementById('detailOverlay').classList.remove('open');
+  }
+}
+
+let currentImages = [];
+let currentImageIndex = 0;
+
+function openFullscreen(img) {
+  const images = Array.from(document.querySelectorAll('.detail-right .proj-img')).map(el => el.src);
+  if (images.length === 0) {
+    images.push(img.src);
+  }
+  currentImages = images;
+  currentImageIndex = images.indexOf(img.src);
+  if (currentImageIndex === -1) currentImageIndex = 0;
+  
+  updateFullscreenImage();
+  document.getElementById('fsOverlay').classList.add('open');
+  if (window.location.hash !== '#fullscreen') {
+    history.pushState({modal: 'fullscreen'}, '', '#fullscreen');
+  }
+}
+
+function updateFullscreenImage() {
+  document.getElementById('fsImage').src = currentImages[currentImageIndex];
+  const multi = currentImages.length > 1;
+  const counter = document.getElementById('fsCounter');
+  if (multi) {
+    counter.style.display = 'block';
+    counter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+  } else {
+    counter.style.display = 'none';
+  }
+}
+
+function nextFsImage() {
+  if (currentImages.length <= 1) return;
+  currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+  updateFullscreenImage();
+}
+
+function prevFsImage() {
+  if (currentImages.length <= 1) return;
+  currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+  updateFullscreenImage();
+}
+
+let touchStartX = 0;
+let touchEndX = 0;
+const fsOverlay = document.getElementById('fsOverlay');
+
+fsOverlay.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
+});
+
+fsOverlay.addEventListener('touchend', e => {
+  touchEndX = e.changedTouches[0].screenX;
+  if (currentImages.length <= 1) return;
+  const threshold = 40;
+  if (touchEndX < touchStartX - threshold) nextFsImage();
+  else if (touchEndX > touchStartX + threshold) prevFsImage();
+});
+
+document.addEventListener('keydown', e => {
+  if (fsOverlay.classList.contains('open')) {
+    if (e.key === 'ArrowRight') nextFsImage();
+    else if (e.key === 'ArrowLeft') prevFsImage();
+    else if (e.key === 'Escape') closeFullscreen();
+  }
+});
+
+function closeFullscreen() {
+  if (window.location.hash === '#fullscreen') {
+    history.back();
+  } else {
+    document.getElementById('fsOverlay').classList.remove('open');
+  }
+}
+
+window.addEventListener('popstate', (e) => {
+  const hash = window.location.hash;
+  
+  if (hash !== '#menu') {
+    document.getElementById('sidebar').classList.remove('open');
+    const overlay = document.getElementById('sidebarOverlay');
+    if(overlay) overlay.classList.remove('open');
+  }
+
+  if (hash === '#detail') {
+    document.getElementById('fsOverlay').classList.remove('open');
+    document.getElementById('detailOverlay').classList.add('open');
+  } else if (hash === '#list') {
+    document.getElementById('fsOverlay').classList.remove('open');
+    document.getElementById('detailOverlay').classList.remove('open');
+    switchTab('list', false);
+  } else if (hash === '#menu') {
+    document.getElementById('sidebar').classList.add('open');
+    const overlay = document.getElementById('sidebarOverlay');
+    if(overlay) overlay.classList.add('open');
+  } else if (hash === '') {
+    document.getElementById('fsOverlay').classList.remove('open');
+    document.getElementById('detailOverlay').classList.remove('open');
+    switchTab('dashboard', false);
+  }
+});
+
+function toggleSidebar() {
+  if (window.innerWidth > 992) return;
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar.classList.contains('open')) {
+    if (window.location.hash === '#menu') {
+      history.back();
+    } else {
+      sidebar.classList.remove('open');
+      document.getElementById('sidebarOverlay')?.classList.remove('open');
+    }
+  } else {
+    sidebar.classList.add('open');
+    document.getElementById('sidebarOverlay')?.classList.add('open');
+    if (window.location.hash !== '#menu') {
+      history.pushState(null, '', '#menu');
+    }
+  }
+}
+
+function initCharts() {
+  // Distribution chart
+  const buckets = [0,0,0,0]; // 0-25, 26-50, 51-75, 76-100
+  DATA.forEach(p => {
+    const pct = p.overall_progress_pct || 0;
+    if (pct <= 25) buckets[0]++;
+    else if (pct <= 50) buckets[1]++;
+    else if (pct <= 75) buckets[2]++;
+    else buckets[3]++;
+  });
+  const dCtx = document.getElementById('distChart').getContext('2d');
+  distChart = new Chart(dCtx, {
+    type: 'bar',
+    data: {
+      labels: ['0–25%', '26–50%', '51–75%', '76–100%'],
+      datasets: [{ label: 'Projects', data: buckets, backgroundColor: ['#fdeaea','#fff3e8','#e8f4ee','#1a6b3c'], borderColor: ['#9e1f1f','#b35c00','#1a6b3c','#0f4a2a'], borderWidth: 1, borderRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { ticks: { font: { size: 11 } }, grid: { display: false } } } }
+  });
+}
+
+
+function showToast(msg, isError) {
+  const t = document.getElementById('uploadToast');
+  t.textContent = msg;
+  t.className = 'upload-toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'upload-toast', 3000);
+}
+
+function bufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+function handleExcelUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(e.target.result);
+      
+      const ws = wb.worksheets.find(s => s.name === 'Project_Data_Flat') || wb.worksheets[0];
+      if (!ws) { showToast('Sheet is empty', true); return; }
+      const sheetName = ws.name;
+
+      const header = [];
+      const rows = [];
+      
+      ws.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) {
+          row.eachCell((cell, colNumber) => {
+            header[colNumber] = cell.value ? cell.value.toString().trim() : '';
+          });
+        } else {
+          const rowData = {};
+          header.forEach((h, c) => {
+            if (h) {
+              const cell = row.getCell(c);
+              let val = cell.value;
+              if (val && typeof val === 'object' && val.richText) val = val.richText.map(rt => rt.text).join('');
+              if (val && typeof val === 'object' && val.result !== undefined) val = val.result;
+              rowData[h] = val;
+            }
+          });
+          rowData._rowNumber = rowNumber;
+          rows.push(rowData);
+        }
+      });
+
+      if (!rows.length) { showToast('Sheet is empty', true); return; }
+
+      const imgMap = {};
+      for (const img of ws.getImages()) {
+        try {
+          const rowNum = Math.floor(img.range.tl.nativeRow) + 1;
+          const imgObj = wb.getImage(img.imageId);
+          if (imgObj && imgObj.buffer) {
+             const base64 = bufferToBase64(imgObj.buffer);
+             const url = `data:image/${imgObj.extension};base64,${base64}`;
+             if (!imgMap[rowNum]) imgMap[rowNum] = [];
+             // Sort by col to keep Picture 1 then Picture 2 order
+             imgMap[rowNum].push({ col: img.range.tl.nativeCol, url });
+          }
+        } catch(err) {}
+      }
+
+      rows.forEach(r => {
+         const imgs = imgMap[r._rowNumber];
+         if (imgs) {
+           imgs.sort((a,b) => a.col - b.col);
+           if (imgs[0]) r['Picture 1'] = imgs[0].url;
+           if (imgs[1]) r['Picture 2'] = imgs[1].url;
+           if (imgs[2]) r['Picture 3'] = imgs[2].url;
+           if (imgs[3]) r['Picture 4'] = imgs[3].url;
+         }
+      });
+
+      const cols = Object.keys(rows[0] || {});
+      const isFlat = cols.some(c => c.toLowerCase().includes('projectid') || c.toLowerCase() === 'projectid');
+      
+      let parsed;
+      if (isFlat) {
+        parsed = parseFlat(rows);
+      } else {
+        showToast('Could not detect format. Use the restructured Excel file.', true);
+        return;
+      }
+
+      if (!parsed.length) { showToast('No data found', true); return; }
+
+      // Replace DATA
+      DATA.length = 0;
+      parsed.forEach(p => DATA.push(p));
+      
+      // Refresh everything
+      if (distChart) { distChart.destroy(); distChart = null; }
+      
+      initFYFilter_fresh();
+      applyFilters();
+      updateSidebarCounts();
+      setTimeout(initCharts, 100);
+
+      document.getElementById('uploadLabel').textContent = file.name;
+      showToast(`✓ Loaded ${parsed.length} projects from "${sheetName}"`);
+    } catch(err) {
+      showToast('Parse error: ' + err.message, true);
+    } finally {
+      event.target.value = '';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function initFYFilter_fresh() {
+  const sel = document.getElementById('fyFilter');
+  // Clear existing options except first
+  while (sel.options.length > 1) sel.remove(1);
+  const fys = new Set();
+  DATA.forEach(p => p.phases && p.phases.forEach(ph => { if (ph.fy) fys.add(ph.fy); }));
+  [...fys].sort().forEach(fy => {
+    const o = document.createElement('option');
+    o.value = fy; o.textContent = 'FY ' + fy;
+    sel.appendChild(o);
+  });
+}
+
+function findCol(row, ...candidates) {
+  for (const c of candidates) {
+    for (const k of Object.keys(row)) {
+      if (k.toLowerCase().replace(/[^a-z0-9]/g,'') === c.toLowerCase().replace(/[^a-z0-9]/g,'')) return row[k];
+    }
+  }
+  return null;
+}
+
+function parseFlat(rows) {
+  // Group by ProjectID
+  const groups = {};
+  const order = [];
+  rows.forEach(row => {
+    const pid = String(findCol(row, 'ProjectID', 'Project ID') || '').trim();
+    if (!pid) return;
+    if (!groups[pid]) { groups[pid] = []; order.push(pid); }
+    groups[pid].push(row);
+  });
+
+  return order.map((pid, idx) => {
+    const phases = groups[pid];
+    const first = phases[0];
+    const name = String(findCol(first, 'ProjectName', 'Project Name', 'Name of Work') || pid);
+    const builderName = String(findCol(first, 'BuilderName', 'Builder Name', 'Builder', 'Contractor', 'Contractor Name', 'Name of Contractor') || '');
+    const estCost = parseFloat(findCol(first, 'EstimatedCost', 'Estimated Cost (Lac)', 'Estimated Cost') || 0) || null;
+    const pic1 = String(findCol(first, 'picture 1', 'picture1', 'pic 1', 'pic1') || '').trim() || null;
+    const pic2 = String(findCol(first, 'picture 2', 'picture2', 'pic 2', 'pic2') || '').trim() || null;
+    const pic3 = String(findCol(first, 'picture 3', 'picture3', 'pic 3', 'pic3') || '').trim() || null;
+    const pic4 = String(findCol(first, 'picture 4', 'picture4', 'pic 4', 'pic4') || '').trim() || null;
+
+    let totalSanction = 0, totalContract = 0, totalAllotment = 0, totalPhysAmt = 0, totalExpenditure = 0;
+    let pctSum = 0, pctCount = 0;
+
+    const phaseList = phases.map(ph => {
+      const san = parseFloat(findCol(ph, 'SanctionAmount', 'Sanction Amount (Lac)', 'Sanction Amount (GO)') || 0) || 0;
+      const con = parseFloat(findCol(ph, 'ContractAmount', 'Contract Amount (Lac)', 'Contract Amount') || 0) || 0;
+      const pct = parseFloat(findCol(ph, 'PhysicalProgress(%)', 'Physical Progress (%)', 'PhysicalPct') || 0) || null;
+      const amt = parseFloat(findCol(ph, 'PhysicalProgress(Lac)', 'Physical Progress (Lac)', 'PhysicalAmt') || 0) || 0;
+      const allot = parseFloat(findCol(ph, 'Allotment', 'Allotment (Lac)', 'Total Allotment so far') || 0) || 0;
+      const exp = parseFloat(findCol(ph, 'Expenditure', 'Total Expenditure', 'Expenditure (Lac)', 'Total Expenditure (Lac)') || 0) || 0;
+      const fy = String(findCol(ph, 'FY', 'Fiscal Year') || '').trim() || null;
+      const phase = String(findCol(ph, 'Phase') || '').trim();
+      const remarks = String(findCol(ph, 'Remarks') || '').trim();
+
+      totalSanction += san;
+      totalContract += con;
+      totalAllotment += allot;
+      totalPhysAmt += amt;
+      totalExpenditure += exp;
+      if (pct !== null && pct > 0) { pctSum += pct; pctCount++; }
+
+      return { phase, fy, sanction: san, contract: con, progress_pct: pct, progress_amt: amt, allotment: allot, expenditure: exp, remarks };
+    });
+
+    const overallPct = pctCount ? Math.round(pctSum / pctCount) : 0;
+
+    return {
+      id: idx + 1,
+      ser: idx + 1,
+      name,
+      builder_name: builderName,
+      total_estimated_cost: estCost,
+      total_sanction: totalSanction,
+      total_contract: totalContract,
+      total_allotment: totalAllotment,
+      total_expenditure: totalExpenditure,
+      total_progress_amt: totalPhysAmt,
+      overall_progress_pct: overallPct,
+      phase_count: phaseList.length,
+      phases: phaseList,
+      pic1: pic1,
+      pic2: pic2,
+      pic3: pic3,
+      pic4: pic4
+    };
+  });
+}
+
+// Init
+initFYFilter();
+applyFilters();
+updateSidebarCounts();
+setTimeout(initCharts, 100);
+</script>
+</body>
+</html>
+<script>
+  // Register Service Worker for PWA/offline support
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Fails silently when opened as a local file — that's OK
+      });
+    });
+  }
+</script>
