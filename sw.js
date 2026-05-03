@@ -1,10 +1,10 @@
 const CACHE_NAME = 'projects-dashboard-v1';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
+  '/ExcelDashboardv2/',
+  '/ExcelDashboardv2/index.html',
+  '/ExcelDashboardv2/manifest.json',
+  '/ExcelDashboardv2/icon-192.png',
+  '/ExcelDashboardv2/icon-512.png'
   'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js',
   'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js'
