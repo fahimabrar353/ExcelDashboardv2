@@ -82,7 +82,7 @@
   /* STATS ROW */
   .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; }
-  .stat-card.clickable { cursor: pointer; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
+  .stat-card.clickable { background: var(--surface2); cursor: pointer; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
   .stat-card.clickable:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 4px 12px rgba(26, 107, 60, 0.1); }
   .stat-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
   .stat-value { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; color: var(--text); line-height: 1; }
@@ -136,8 +136,8 @@
   .detail-id { font-size: 11px; color: var(--text3); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
   .detail-name { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--text); }
   .detail-body { display: flex; flex: 1; overflow: hidden; padding: 0; }
-  .detail-left { width: 50%; padding: 30px; overflow-y: auto; border-right: 1px solid var(--border); }
-  .detail-right { width: 50%; padding: 30px; overflow-y: auto; ; }
+  .detail-left { width: 60%; padding: 30px; overflow-y: auto; border-right: 1px solid var(--border); }
+  .detail-right { width: 40%; padding: 30px; overflow-y: auto; ; }
   .proj-img { width: 100%; border-radius: var(--radius-lg); margin-bottom: 20px; box-shadow: var(--shadow); object-fit: contain; background: var(--surface); cursor: zoom-in; transition: transform 0.2s; }
   .proj-img:hover { transform: scale(1.02); }
   .fs-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
@@ -323,14 +323,7 @@
   <div class="main">
     <div id="dashboardView">
       <div class="stats-row">
-        <div class="stat-card clickable" onclick="switchTab('list')">
-          <div class="stat-label" style="display:flex; justify-content:space-between; align-items:center;">
-            Total Projects
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
-          </div>
-          <div class="stat-value" id="statTotal">53</div>
-          <div class="stat-sub">Tap to view list</div>
-        </div>
+        
         <div class="stat-card">
           <div class="stat-label">Total Sanction</div>
           <div class="stat-value green" id="statSanction">—</div>
@@ -350,6 +343,14 @@
           <div class="stat-label">Total Expenditure</div>
           <div class="stat-value" id="statExpenditure" style="color:var(--info)">—</div>
           <div class="stat-sub">Lac BDT</div>
+        </div>
+        <div class="stat-card clickable" onclick="switchTab('list')">
+          <div class="stat-label" style="display:flex; justify-content:space-between; align-items:center;">
+            Total Projects
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+          </div>
+          <div class="stat-value" id="statTotal">53</div>
+          <div class="stat-sub">Tap to view list</div>
         </div>
       </div>
 
