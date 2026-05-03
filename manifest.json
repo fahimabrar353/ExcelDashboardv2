@@ -3,7 +3,7 @@
   "short_name": "Projects Dashboard",
   "description": "Construction Works Project Dashboard",
   "start_url": "/ExcelDashboardv2/",
-  "scope": "/EExcelDashboardv/",
+  "scope": "/ExcelDashboardv2/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#1a1a18",
